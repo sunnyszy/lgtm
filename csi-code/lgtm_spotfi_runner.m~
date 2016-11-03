@@ -25,7 +25,7 @@ function spotfi_file_runner(input_file_name)
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     globals_init()
     
-    global DEBUG_BRIDGE_CODE_CALLING SIMULATION_CREATE
+    global DEBUG_BRIDGE_CODE_CALLING
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Get the full path to the currently executing file and change the
     % pwd to the folder this file is contained in...
@@ -41,15 +41,21 @@ function spotfi_file_runner(input_file_name)
         close all
         clc
     end
-
+    
+    %% alternative setting
+%     data_files = {'test-data/line-of-sight-localization-tests--in-room/los-test-heater.dat'};
+%     top_aoas = run(data_files);
+%     top_aoas
+%     if nargin == 0 
+%         data_file = '../injection-monitor/.lgtm-monitor.dat';
+%     else
+%         data_file = sprintf('../injection-monitor/%s', input_file_name);
+%     end
     
     
     %% main
     name_base = 'los-test-desk-left';
     data_file = ['test-data/' name_base '.dat'];
-    if SIMULATION_CREATE
-        generate_simulation_data(data_file);
-    end
     top_aoas = run(data_file);
     
     save(['test-output/' name_base]);
@@ -82,12 +88,11 @@ function globals_init
     global DEBUG_PATHS_LIGHT
     global NUMBER_OF_PACKETS_TO_CONSIDER
     global DEBUG_BRIDGE_CODE_CALLING
-    global SIMULATION_CREATE
+    global SIMULATION
     DEBUG_PATHS = false;
     DEBUG_PATHS_LIGHT = false;
     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
     DEBUG_BRIDGE_CODE_CALLING = false;
-    SIMULATION_CREATE = 1; % always create new simulation testcase
     
     
     %% Output controls
@@ -112,17 +117,9 @@ function globals_init
     OUTPUT_PACKET_PROGRESS = false;
     OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
     
-    %% constant parameter
-    global d theta_the l_the channel_frequency delta_f n_subcarrier;
+    %% constant
+    global d;
     d = 3.25*0.0254; % distance between two antenna;
-    theta_the = 30; % in degree
-    l_the = 1; % in meter
-    channel_frequency = 2462e6;
-    delta_f = 312.5e3;
-    n_subcarrier = 30; % Atheros 56
-    
-    
-    
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
