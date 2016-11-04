@@ -38,7 +38,8 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     [current_directory, ~, ~] = fileparts(mfilename('fullpath'));
     cd(current_directory);
     % Paths for the csitool functions provided
-    path('../../linux-80211n-csitool-supplementary/matlab', path);
+    path('.', path);
+    read_log_file()
     if DEBUG_BRIDGE_CODE_CALLING
         fprintf('The path: %s\n', path)
         fprintf('The pwd: %s\n', pwd)
