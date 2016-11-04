@@ -25,8 +25,7 @@ function spotfi_file_runner(input_file_name)
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     globals_init()
     
-    global DEBUG_BRIDGE_CODE_CALLING SIMULATION_CREATE
-    SIMULATION_CREATE = 0;
+    global DEBUG_BRIDGE_CODE_CALLING SIMULATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Get the full path to the currently executing file and change the
     % pwd to the folder this file is contained in...
@@ -42,14 +41,19 @@ function spotfi_file_runner(input_file_name)
         close all
         clc
     end
-
-    
     
     %% main
-    name_base = 'simulation_tmp';
-    name_base = 'los-test-desk-left';
+    if SIMULATION
+        if ~exist('test-data/simulation_tmp.mat')
+            generate_simulation_data(['test-data/' name_base], 4000);
+        end
+        name_base = 'simulation_tmp';
+    else   
+        name_base = 'los-test-desk-left';
+    end
+
     data_file = ['test-data/' name_base];
-    if SIMULATION_CREATE
+    if SIMULATION
         generate_simulation_data(['test-data/' name_base], 4000);
     end
     top_aoas = run(data_file);
@@ -77,59 +81,51 @@ function output_top_aoas(top_aoas, output_file_name)
     fclose(output_file);
 end
 
-function globals_init
-    %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
-    %% Debug Controls
-    global DEBUG_PATHS
-    global DEBUG_PATHS_LIGHT
-    global NUMBER_OF_PACKETS_TO_CONSIDER
-    global DEBUG_BRIDGE_CODE_CALLING
-    global SIMULATION_CREATE
-    DEBUG_PATHS = false;
-    DEBUG_PATHS_LIGHT = false;
-    NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
-    DEBUG_BRIDGE_CODE_CALLING = false;
-    SIMULATION_CREATE = 1; % always create new simulation testcase
-    
-    
-    %% Output controls
-    global OUTPUT_AOAS
-    global OUTPUT_TOFS
-    global OUTPUT_AOA_MUSIC_PEAK_GRAPH
-    global OUTPUT_TOF_MUSIC_PEAK_GRAPH
-    global OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH
-    global OUTPUT_SELECTIVE_AOA_TOF_MUSIC_PEAK_GRAPH
-    global OUTPUT_AOA_VS_TOF_PLOT
-    global OUTPUT_SUPPRESSED
-    global OUTPUT_PACKET_PROGRESS
-    global OUTPUT_FIGURES_SUPPRESSED
-    OUTPUT_AOAS = false;
-    OUTPUT_TOFS = false;
-    OUTPUT_AOA_MUSIC_PEAK_GRAPH = false;%true;
-    OUTPUT_TOF_MUSIC_PEAK_GRAPH = false;%true;
-    OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH = false;
-    OUTPUT_SELECTIVE_AOA_TOF_MUSIC_PEAK_GRAPH = false;
-    OUTPUT_AOA_VS_TOF_PLOT = false;
-    OUTPUT_SUPPRESSED = true;
-    OUTPUT_PACKET_PROGRESS = false;
-    OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
-    
-    %% constant parameter
-    global d theta_the l_the channel_frequency delta_f n_subcarrier c;
-    d = 3.25*0.0254; % distance between two antenna;
-    theta_the = pi/6; % in rad
-    l_the = 100; % in meter
-    channel_frequency = 2462e6;
-    delta_f = 312.5e3;
-    n_subcarrier = 30; % Atheros 56
-    c = 3e8; % speed of light
-    
-    
-    
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-end
+% function globals_init
+%     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
+%     %% Debug Controls
+%     global DEBUG_PATHS
+%     global DEBUG_PATHS_LIGHT
+%     global NUMBER_OF_PACKETS_TO_CONSIDER
+%     global DEBUG_BRIDGE_CODE_CALLING
+%     global SIMULATION
+%     DEBUG_PATHS = false;
+%     DEBUG_PATHS_LIGHT = false;
+%     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
+%     DEBUG_BRIDGE_CODE_CALLING = false;
+%     SIMULATION = true; % always create new simulation testcase
+%     
+%     
+%     %% Output controls
+%     global OUTPUT_AOAS
+%     global OUTPUT_TOFS
+%     global OUTPUT_AOA_MUSIC_PEAK_GRAPH
+%     global OUTPUT_TOF_MUSIC_PEAK_GRAPH
+%     global OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH
+%     global OUTPUT_SELECTIVE_AOA_TOF_MUSIC_PEAK_GRAPH
+%     global OUTPUT_AOA_VS_TOF_PLOT
+%     global OUTPUT_SUPPRESSED
+%     global OUTPUT_PACKET_PROGRESS
+%     global OUTPUT_FIGURES_SUPPRESSED
+%     OUTPUT_AOAS = false;
+%     OUTPUT_TOFS = false;
+%     OUTPUT_AOA_MUSIC_PEAK_GRAPH = false;%true;
+%     OUTPUT_TOF_MUSIC_PEAK_GRAPH = false;%true;
+%     OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH = false;
+%     OUTPUT_SELECTIVE_AOA_TOF_MUSIC_PEAK_GRAPH = 0;%0;
+%     OUTPUT_AOA_VS_TOF_PLOT = false;
+%     OUTPUT_SUPPRESSED = true;
+%     OUTPUT_PACKET_PROGRESS = false;
+%     OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
+%     
+%     
+%     
+%     
+%     
+%     
+%     
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% end
 
 %% Runs the SpotFi test over the passed in data files which each contain CSI data for many packets
 % data_files -- a cell array of file paths to data files
@@ -140,7 +136,7 @@ function output_top_aoas = run(data_file)
     
     % Output controls
     global OUTPUT_SUPPRESSED
-    global SIMULATION_CREATE
+    global SIMULATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     global d channel_frequency f_delta
     % Set physical layer parameters (frequency, subfrequency spacing, and antenna spacing
@@ -155,7 +151,7 @@ function output_top_aoas = run(data_file)
     if ~OUTPUT_SUPPRESSED
         fprintf('\n\nRunning on data file: %s\n', data_file)
     end
-    if ~SIMULATION_CREATE
+    if ~SIMULATION
         csi_trace = read_bf_file([data_file '.dat']);
     else
         load(data_file);

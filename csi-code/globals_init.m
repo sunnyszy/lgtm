@@ -5,10 +5,12 @@ function globals_init
     global DEBUG_PATHS_LIGHT
     global NUMBER_OF_PACKETS_TO_CONSIDER
     global DEBUG_BRIDGE_CODE_CALLING
+    global SIMULATION
     DEBUG_PATHS = false;
     DEBUG_PATHS_LIGHT = false;
-    NUMBER_OF_PACKETS_TO_CONSIDER = -1; % Set to -1 to ignore this variable's value
+    NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
     DEBUG_BRIDGE_CODE_CALLING = false;
+    SIMULATION = true;
     
     % Output controls
     global OUTPUT_AOAS
@@ -33,5 +35,16 @@ function globals_init
     OUTPUT_SUPPRESSED = false;
     OUTPUT_PACKET_PROGRESS = false;
     OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
+    
+    %% constant parameter
+    global d theta_the l_the channel_frequency delta_f n_subcarrier c;
+    d = 3.25*0.0254; % distance between two antenna;
+    theta_the = pi/6; % in rad
+    l_the = 100; % in meter
+    channel_frequency = 2462e6;
+    delta_f = 312.5e3;
+    n_subcarrier = 30; % Atheros 56
+    c = 3e8; % speed of light
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end

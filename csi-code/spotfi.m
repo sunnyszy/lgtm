@@ -37,7 +37,7 @@ function output_top_aoas = spotfi(csi_trace, data_name)
     global OUTPUT_AOA_VS_TOF_PLOT
     global OUTPUT_PACKET_PROGRESS
     global OUTPUT_FIGURES_SUPPRESSED
-    global SIMULATION_CREATE
+    global SIMULATION
     % global 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -54,7 +54,7 @@ function output_top_aoas = spotfi(csi_trace, data_name)
     % Do computations for packet one so the packet loop can be parallelized
     % Get CSI for current packet
     csi_entry = csi_trace{1};
-    if SIMULATION_CREATE
+    if SIMULATION
         csi = csi_entry.csi;
     else
         csi = get_scaled_csi(csi_entry);
@@ -70,12 +70,11 @@ function output_top_aoas = spotfi(csi_trace, data_name)
     % Acquire smoothed CSI matrix
     smoothed_sanitized_csi = smooth_csi(sanitized_csi);
     % Run SpotFi's AoA-ToF MUSIC algorithm on the smoothed and sanitized CSI matrix
-    [aoa_packet_data{1}, tof_packet_data{1}] = aoa_tof_music(...
-            smoothed_sanitized_csi, data_name);
+    [aoa_packet_data{1}, tof_packet_data{1}] = aoa_tof_music(smoothed_sanitized_csi, data_name);
 
     %% TODO: REMEMBER THIS IS A PARFOR LOOP, AND YOU CHANGED THE ABOVE CODE AND THE BEGIN INDEX
-    %parfor (packet_index = 2:num_packets, 4)
     for packet_index = 2:num_packets
+    %for packet_index = 2:num_packets
         % globals_init();
         if ~OUTPUT_SUPPRESSED && OUTPUT_PACKET_PROGRESS
             fprintf('Packet %d of %d\n', packet_index, num_packets)
@@ -83,7 +82,7 @@ function output_top_aoas = spotfi(csi_trace, data_name)
         % Get CSI for current packet
         csi_entry = csi_trace{packet_index};
         
-        if SIMULATION_CREATE
+        if SIMULATION
             csi = csi_entry.csi;
         else
             csi = get_scaled_csi(csi_entry);
