@@ -126,7 +126,10 @@ end
 %% Runs the SpotFi test over the passed in data files which each contain CSI data for many packets
 % data_files -- a cell array of file paths to data files
 function output_top_aoas = run(data_file)
-    %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
+    %% DEFINE VARIABLE-----------------------------------------------------------------%%
+    % Flow Controls
+    global AOA_EST_MODE
+    
     % Debug Controls
     global NUMBER_OF_PACKETS_TO_CONSIDER
     
@@ -174,6 +177,15 @@ function output_top_aoas = run(data_file)
     fprintf('num_packets: %d\n', num_packets)
     sampled_csi_trace = csi_sampling(csi_trace, num_packets, ...
             1, length(csi_trace));
-    
-    output_top_aoas = spotfi(sampled_csi_trace);
+    if strcmp(AOA_EST_MODE, 'SPOTFI')
+        output_top_aoas = spotfi(sampled_csi_trace);
+    elseif strcmp(AOA_EST_MODE, 'MUSIC')
+        for i = 1:num_packets
+            tmp_csi = squeeze(sampled_csi_trace{i}.csi);
+            aoa_possibility = musicAOA(tmp_csi(:,1));
+            [~, output_top_aoas(1,:)] = sort(aoa_possibility, 'descend');
+        end
+        mean_aoa = mean(output_top_aoas(:,1));
+    end
+            
 end

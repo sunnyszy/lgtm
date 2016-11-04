@@ -1,16 +1,23 @@
 function globals_init
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
+    % Flow Controls
+    global AOA_EST_MODE
+    AOA_EST_MODE = 'MUSIC'; %'SPOTFI'
+    
+    
     % Debug Controls
     global DEBUG_PATHS
     global DEBUG_PATHS_LIGHT
     global NUMBER_OF_PACKETS_TO_CONSIDER
     global DEBUG_BRIDGE_CODE_CALLING
     global SIMULATION
+    
     DEBUG_PATHS = false;
     DEBUG_PATHS_LIGHT = false;
     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
     DEBUG_BRIDGE_CODE_CALLING = false;
     SIMULATION = true;
+    
     
     % Output controls
     global OUTPUT_AOAS
