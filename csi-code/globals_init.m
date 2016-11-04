@@ -52,7 +52,7 @@ function globals_init
     d = 3.25*0.0254; % distance between two antenna;
     theta_the = pi/6; % in rad
     l_the = 5; % in meter
-    channel_frequency = 2462e6;
+    channel_frequency = 5180e6;
     delta_f = 312.5e3;
     n_subcarrier = 56; % Atheros 56
     c = 3e8; % speed of light

@@ -31,7 +31,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     
     SIMULATION = false;
     SIMULAIION_ALWAYS_GENERATE_DATA = true;
-    AOA_EST_MODE = 'MUSIC';%'SPOTFI';
+    AOA_EST_MODE = 'SPOTFI';
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Get the full path to the currently executing file and change the
@@ -56,7 +56,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
             generate_simulation_data(['test-data/' name_base], 4000);
         end
     else   
-        name_base = '45';
+        name_base = 'los-test-desk-left';
     end
 
     data_file = ['test-data/' name_base];
@@ -152,13 +152,7 @@ function output_top_aoas = run(data_file)
         fprintf('\n\nRunning on data file: %s\n', data_file)
     end
     if ~SIMULATION
-        csi_trace = read_log_file([data_file '.dat']);
-        %get the true csi order
-        for i = 1:length(csi_trace)
-            tmp_csi = csi_trace{i}.csi(2,:,:);
-            csi_trace{i}.csi(2,:,:) = csi_trace{i}.csi(3,:,:);
-            csi_trace{i}.csi(3,:,:) = tmp_csi;
-        end
+        csi_trace = read_bf_file([data_file '.dat']);
     else
         load(data_file);
     end
@@ -188,11 +182,11 @@ function output_top_aoas = run(data_file)
         output_top_aoas = spotfi(sampled_csi_trace);
     elseif strcmp(AOA_EST_MODE, 'MUSIC')
         for i = 1:num_packets
-            tmp_csi = squeeze(sampled_csi_trace{i}.csi(:,1,:));
+            tmp_csi = squeeze(sampled_csi_trace{i}.csi);
             aoa_possibility = musicAOA(tmp_csi(:,1));
-            [~, top_aoas(i,:)] = sort(aoa_possibility, 'descend');
+            [~, output_top_aoas(i,:)] = sort(aoa_possibility, 'descend');
         end
-        output_top_aoas = transpose(top_aoas(:,1));
+        mean_aoa = mean(output_top_aoas(:,1));
     end
             
 end

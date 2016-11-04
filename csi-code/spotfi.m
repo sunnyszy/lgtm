@@ -57,10 +57,10 @@ function output_top_aoas = spotfi(csi_trace, data_name)
     if SIMULATION
         csi = csi_entry.csi;
     else
-        csi = get_scaled_csi(csi_entry);
+        csi = csi_entry.csi;
     end
     % Only consider measurements for transmitting on one antenna
-    csi = csi(1, :, :);
+    csi = csi(:, 1, :);
     % Remove the single element dimension
     csi = squeeze(csi);
 
@@ -85,11 +85,11 @@ function output_top_aoas = spotfi(csi_trace, data_name)
         if SIMULATION
             csi = csi_entry.csi;
         else
-            csi = get_scaled_csi(csi_entry);
+            csi = csi_entry.csi;
         end
         
         % Only consider measurements for transmitting on one antenna
-        csi = csi(1, :, :);
+        csi = csi(:, 1, :);
         % Remove the single element dimension
         csi = squeeze(csi);
 
