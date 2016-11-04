@@ -27,18 +27,21 @@
 % sub_freq_delta   -- the difference between adjacent subcarriers
 % antenna_distance -- the distance between each antenna in the array, measured in meters
 % data_name        -- a label for the data which is included in certain outputs
-function output_top_aoas = spotfi(csi_trace, frequency, sub_freq_delta, antenna_distance, data_name)
-    if exist('OUTPUT_SUPPRESSED') == 0
-        globals_init()
-    end
+function output_top_aoas = spotfi(csi_trace, data_name)
+%     if exist('OUTPUT_SUPPRESSED') == 0
+%         globals_init()
+%     end
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % Output controls
     global OUTPUT_SUPPRESSED
     global OUTPUT_AOA_VS_TOF_PLOT
     global OUTPUT_PACKET_PROGRESS
     global OUTPUT_FIGURES_SUPPRESSED
+    global SIMULATION_CREATE
+    % global 
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if nargin < 5
+    if nargin < 2
         data_name = ' - ';
     end
     
@@ -51,7 +54,11 @@ function output_top_aoas = spotfi(csi_trace, frequency, sub_freq_delta, antenna_
     % Do computations for packet one so the packet loop can be parallelized
     % Get CSI for current packet
     csi_entry = csi_trace{1};
-    csi = get_scaled_csi(csi_entry);
+    if SIMULATION_CREATE
+        csi = csi_entry.csi;
+    else
+        csi = get_scaled_csi(csi_entry);
+    end
     % Only consider measurements for transmitting on one antenna
     csi = csi(1, :, :);
     % Remove the single element dimension
@@ -59,36 +66,42 @@ function output_top_aoas = spotfi(csi_trace, frequency, sub_freq_delta, antenna_
 
     % Sanitize ToFs with Algorithm 1
     packet_one_phase_matrix = unwrap(angle(csi), pi, 2);
-    sanitized_csi = spotfi_algorithm_1(csi, sub_freq_delta);
+    sanitized_csi = spotfi_algorithm_1(csi);
     % Acquire smoothed CSI matrix
     smoothed_sanitized_csi = smooth_csi(sanitized_csi);
     % Run SpotFi's AoA-ToF MUSIC algorithm on the smoothed and sanitized CSI matrix
     [aoa_packet_data{1}, tof_packet_data{1}] = aoa_tof_music(...
-            smoothed_sanitized_csi, antenna_distance, frequency, sub_freq_delta, data_name);
+            smoothed_sanitized_csi, data_name);
 
     %% TODO: REMEMBER THIS IS A PARFOR LOOP, AND YOU CHANGED THE ABOVE CODE AND THE BEGIN INDEX
     %parfor (packet_index = 2:num_packets, 4)
     for packet_index = 2:num_packets
-        globals_init();
+        % globals_init();
         if ~OUTPUT_SUPPRESSED && OUTPUT_PACKET_PROGRESS
             fprintf('Packet %d of %d\n', packet_index, num_packets)
         end
         % Get CSI for current packet
         csi_entry = csi_trace{packet_index};
-        csi = get_scaled_csi(csi_entry);
+        
+        if SIMULATION_CREATE
+            csi = csi_entry.csi;
+        else
+            csi = get_scaled_csi(csi_entry);
+        end
+        
         % Only consider measurements for transmitting on one antenna
         csi = csi(1, :, :);
         % Remove the single element dimension
         csi = squeeze(csi);
 
         % Sanitize ToFs with Algorithm 1
-        sanitized_csi = spotfi_algorithm_1(csi, sub_freq_delta, packet_one_phase_matrix);
+        sanitized_csi = spotfi_algorithm_1(csi, packet_one_phase_matrix);
 
         % Acquire smoothed CSI matrix
         smoothed_sanitized_csi = smooth_csi(sanitized_csi);
         % Run SpotFi's AoA-ToF MUSIC algorithm on the smoothed and sanitized CSI matrix
         [aoa_packet_data{packet_index}, tof_packet_data{packet_index}] = aoa_tof_music(...
-                smoothed_sanitized_csi, antenna_distance, frequency, sub_freq_delta, data_name);
+                smoothed_sanitized_csi, data_name);
     end
 
     % Find the number of elements that will be in the full_measurement_matrix
@@ -524,12 +537,11 @@ end
 %                           across different AoAs.
 %                         I.E. if there are three AoAs then there will be three rows in 
 %                           estimated_tofs
-function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, ...
-        antenna_distance, frequency, sub_freq_delta, data_name)
+function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, data_name)
     % If OUTPUT_SUPPRESSED does not exist then initialize all the globals.
-    if exist('OUTPUT_SUPPRESSED') == 0
-        globals_init()
-    end
+%     if exist('OUTPUT_SUPPRESSED') == 0
+%         globals_init()
+%     end
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % Debug Variables
     global DEBUG_PATHS
@@ -545,8 +557,10 @@ function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, ...
     global OUTPUT_BINARY_AOA_TOF_MUSIC_PEAK_GRAPH
     global OUTPUT_SUPPRESSED
     global OUTPUT_FIGURES_SUPPRESSED
+    
+    global n_subcarrier;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if nargin == 4
+    if nargin == 1
         data_name = '-';
     end
     
@@ -554,13 +568,19 @@ function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, ...
     R = x * x'; 
     % Find the eigenvalues and eigenvectors of the covariance matrix
     [eigenvectors, eigenvalue_matrix] = eig(R);
-    % Find max eigenvalue for normalization
-    max_eigenvalue = -1111;
-    for ii = 1:size(eigenvalue_matrix, 1)
-        if eigenvalue_matrix(ii, ii) > max_eigenvalue
-            max_eigenvalue = eigenvalue_matrix(ii, ii);
-        end
+    
+    if ~issorted(diag(eigenvalue_matrix))
+        [eigenvalue_matrix,I] = sort(diag(eigenvalue_matrix));
+        eigenvectors = eigenvectors(:, I);
     end
+    
+    % Find max eigenvalue for normalization
+    max_eigenvalue = eigenvalue_matrix(n_subcarrier,n_subcarrier);
+%     for ii = 1:size(eigenvalue_matrix, 1)
+%         if eigenvalue_matrix(ii, ii) > max_eigenvalue
+%             max_eigenvalue = eigenvalue_matrix(ii, ii);
+%         end
+%     end
 
     if DEBUG_PATHS && ~OUTPUT_SUPPRESSED
         fprintf('Normalized Eigenvalues of Covariance Matrix\n')
@@ -618,7 +638,7 @@ function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, ...
     % Peak search
     % Angle in degrees (converts to radians in phase calculations)
     %% TODO: Tuning theta too??
-    theta = -90:1:90; 
+    theta = 0:1:180; 
     % time in milliseconds
     %% TODO: Tuning tau....
     %tau = 0:(1.0 * 10^-9):(50 * 10^-9);
@@ -628,8 +648,7 @@ function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, ...
     for ii = 1:length(theta)
         % Time of Flight Loop (ToF)
         for jj = 1:length(tau)
-            steering_vector = compute_steering_vector(theta(ii), tau(jj), ...
-                    frequency, sub_freq_delta, antenna_distance);
+            steering_vector = compute_steering_vector(theta(ii), tau(jj));
             PP = steering_vector' * (eigenvectors * eigenvectors') * steering_vector;
             Pmusic(ii, jj) = abs(1 /  PP);
         end
@@ -749,27 +768,33 @@ end
 % steering_vector -- the steering vector evaluated at theta and tau
 %
 % NOTE: All distance measurements are in meters
-function steering_vector = compute_steering_vector(theta, tau, freq, sub_freq_delta, ant_dist)
-    steering_vector = zeros(30, 1);
+function steering_vector = compute_steering_vector(theta, tau)
+
+global n_subcarrier delta_f channel_frequency d c;
+
+function omega = omega_tof_phase(tau) 
+    omega = exp(-1i * 2 * pi * delta_f * tau);
+end
+
+function phi = phi_aoa_phase(theta)
+    % Convert to radians
+    theta = deg2rad(theta);
+    phi = exp(-1i * 2 * pi * d * cos(theta) * (channel_frequency / c));
+end
+
+    steering_vector = zeros(n_subcarrier, 1);
     k = 1;
     base_element = 1;
     for ii = 1:2
         for jj = 1:15
-            steering_vector(k, 1) = base_element * omega_tof_phase(tau, sub_freq_delta)^(jj - 1);
+            steering_vector(k, 1) = base_element * omega_tof_phase(tau)^(jj - 1);
             k = k + 1;
         end
-        base_element = base_element * phi_aoa_phase(theta, freq, ant_dist);
+        base_element = base_element * phi_aoa_phase(theta);
     end
 end
 
-%% Compute the phase shifts across subcarriers as a function of ToF
-% tau             -- the time of flight (ToF)
-% frequency_delta -- the frequency difference between adjacent subcarriers
-% Return:
-% time_phase      -- complex exponential representing the phase shift from time of flight
-function time_phase = omega_tof_phase(tau, sub_freq_delta)
-    time_phase = exp(-1i * 2 * pi * sub_freq_delta * tau);
-end
+
 
 %% Compute the phase shifts across the antennas as a function of AoA
 % theta       -- the angle of arrival (AoA) in degrees
@@ -777,13 +802,7 @@ end
 % d           -- the spacing between antenna elements
 % Return:
 % angle_phase -- complex exponential representing the phase shift from angle of arrival
-function angle_phase = phi_aoa_phase(theta, frequency, d)
-    % Speed of light (in m/s)
-    c = 3.0 * 10^8;
-    % Convert to radians
-    theta = theta / 180 * pi;
-    angle_phase = exp(-1i * 2 * pi * d * sin(theta) * (frequency / c));
-end
+
 
 %% Creates the smoothed CSI matrix by rearranging the various csi values in the default CSI matrix.
 % csi          -- the regular CSI matrix to use for creating the smoothed CSI matrix

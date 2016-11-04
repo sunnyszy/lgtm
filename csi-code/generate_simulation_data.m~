@@ -10,7 +10,7 @@ global d theta_the l_the channel_frequency delta_f n_subcarrier c;
 
 base_frequency = channel_frequency - delta_f * (n_subcarrier/2 - 0.5);
 csi = zeros(1,3, n_subcarrier);
-x_offsets = [d 0 -d];
+x_offsets = [-d 0 d];
 
 %generate one packet
 for i = 1:3
@@ -24,12 +24,11 @@ end
 
 %add noise to generate n packet
 squeezed_csi = squeeze(csi);
-csi_trace = cell(n_packet,1);
+packets = cell(n_packet);
 for i = 1:n_packet
-    csi_trace{i}.csi = zeros(1,3,n_subcarrier);
-    csi_trace{i}.csi(1,:,:)= awgn(squeezed_csi,snr, 'measured');
+    
 end
 
-save(file_name, 'csi_trace');    
+    
 
 end

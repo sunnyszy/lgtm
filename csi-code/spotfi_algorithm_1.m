@@ -26,7 +26,7 @@
 % delta_f    -- the difference in frequency between subcarriers
 % Return:
 % csi_matrix -- the same CSI matrix with modified phase
-function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, delta_f, packet_one_phase_matrix)
+function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, packet_one_phase_matrix)
     %% Time of Flight (ToF) Sanitization Algorithm
     %  Obtain a linear fit for the phase
     %  Using the expression:
@@ -47,7 +47,7 @@ function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, delta_f, pa
     phase_matrix = unwrap(angle(csi_matrix), pi, 2);
 
     % Parse input args
-    if nargin < 3
+    if nargin < 2
         packet_one_phase_matrix = phase_matrix;
     end
 
@@ -73,7 +73,6 @@ function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, delta_f, pa
     for m = 1:size(phase_matrix, 1)
         for n = 1:size(phase_matrix, 2)
             % Subtract the phase added from sampling time offset (STO)
-            %phase_matrix(m, n) = packet_one_phase_matrix(m, n) + (2 * pi * delta_f * (n - 1) * tau);
             phase_matrix(m, n) = packet_one_phase_matrix(m, n) - (n - 1) * tau;
         end
     end

@@ -26,6 +26,7 @@ function spotfi_file_runner(input_file_name)
     globals_init()
     
     global DEBUG_BRIDGE_CODE_CALLING SIMULATION_CREATE
+    SIMULATION_CREATE = 0;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Get the full path to the currently executing file and change the
     % pwd to the folder this file is contained in...
@@ -45,10 +46,11 @@ function spotfi_file_runner(input_file_name)
     
     
     %% main
+    name_base = 'simulation_tmp';
     name_base = 'los-test-desk-left';
-    data_file = ['test-data/' name_base '.dat'];
+    data_file = ['test-data/' name_base];
     if SIMULATION_CREATE
-        generate_simulation_data(data_file);
+        generate_simulation_data(['test-data/' name_base], 4000);
     end
     top_aoas = run(data_file);
     
@@ -113,13 +115,14 @@ function globals_init
     OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
     
     %% constant parameter
-    global d theta_the l_the channel_frequency delta_f n_subcarrier;
+    global d theta_the l_the channel_frequency delta_f n_subcarrier c;
     d = 3.25*0.0254; % distance between two antenna;
-    theta_the = 30; % in degree
-    l_the = 1; % in meter
+    theta_the = pi/6; % in rad
+    l_the = 100; % in meter
     channel_frequency = 2462e6;
     delta_f = 312.5e3;
     n_subcarrier = 30; % Atheros 56
+    c = 3e8; % speed of light
     
     
     
@@ -137,21 +140,26 @@ function output_top_aoas = run(data_file)
     
     % Output controls
     global OUTPUT_SUPPRESSED
+    global SIMULATION_CREATE
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    global d channel_frequency f_delta
     % Set physical layer parameters (frequency, subfrequency spacing, and antenna spacing
-    antenna_distance = 0.1;
+    %antenna_distance = 0.1;
     % frequency = 5 * 10^9;
     % frequency = 5.785 * 10^9;
-    frequency = 5.32 * 10^9;
+    %frequency = 5.32 * 10^9;
     % TODO actually 312.5kHz for 2.4G
-    sub_freq_delta = (40 * 10^6) / 30;
+    %sub_freq_delta = (40 * 10^6) / 30;
 
     % Read data file in
     if ~OUTPUT_SUPPRESSED
         fprintf('\n\nRunning on data file: %s\n', data_file)
     end
-    csi_trace = read_bf_file(data_file);
+    if ~SIMULATION_CREATE
+        csi_trace = read_bf_file([data_file '.dat']);
+    else
+        load(data_file);
+    end
 
     % Extract CSI information for each packet
     if ~OUTPUT_SUPPRESSED
@@ -175,5 +183,5 @@ function output_top_aoas = run(data_file)
     sampled_csi_trace = csi_sampling(csi_trace, num_packets, ...
             1, length(csi_trace));
     
-    output_top_aoas = spotfi(sampled_csi_trace, frequency, sub_freq_delta, antenna_distance);
+    output_top_aoas = spotfi(sampled_csi_trace);
 end
