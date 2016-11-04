@@ -53,13 +53,9 @@ function spotfi_file_runner(input_file_name)
     end
 
     data_file = ['test-data/' name_base];
-    if SIMULATION
-        generate_simulation_data(['test-data/' name_base], 4000);
-    end
     top_aoas = run(data_file);
     
     save(['test-output/' name_base]);
-
     if DEBUG_BRIDGE_CODE_CALLING
         fprintf('Done Running!\n')
     end
