@@ -575,28 +575,12 @@ function [estimated_aoas, estimated_tofs] = aoa_tof_music(x, data_name)
     
     % Find max eigenvalue for normalization
     max_eigenvalue = eigenvalue_matrix(n_subcarrier,n_subcarrier);
-%     for ii = 1:size(eigenvalue_matrix, 1)
-%         if eigenvalue_matrix(ii, ii) > max_eigenvalue
-%             max_eigenvalue = eigenvalue_matrix(ii, ii);
-%         end
-%     end
 
     if DEBUG_PATHS && ~OUTPUT_SUPPRESSED
         fprintf('Normalized Eigenvalues of Covariance Matrix\n')
     end
     for ii = 1:size(eigenvalue_matrix, 1)
         eigenvalue_matrix(ii, ii) = eigenvalue_matrix(ii, ii) / max_eigenvalue;
-        if DEBUG_PATHS && ~OUTPUT_SUPPRESSED
-            % Suppress most print statements...
-            if ii > 20
-                fprintf('Index: %d, eigenvalue: %f\n', ii, eigenvalue_matrix(ii, ii))
-                if ii + 1 <= size(eigenvalue_matrix, 1)
-                    fprintf('Decrease Factor %f:\n', ...
-                            ((eigenvalue_matrix(ii + 1, ii + 1) / max_eigenvalue) ...
-                                / eigenvalue_matrix(ii, ii)))
-                end
-            end
-        end
     end
     
     % Find the largest decrease ratio that occurs between the last 10 elements (largest 10 elements)
@@ -785,7 +769,7 @@ end
     k = 1;
     base_element = 1;
     for ii = 1:2
-        for jj = 1:15
+        for jj = 1:n_subcarrier/2
             steering_vector(k, 1) = base_element * omega_tof_phase(tau)^(jj - 1);
             k = k + 1;
         end
@@ -810,12 +794,13 @@ end
 %                   Each column in the matrix includes data from 2 antennas and 15 subcarriers each.
 %                   Has dimension 30x32. 
 function smoothed_csi = smooth_csi(csi)
+    global n_subcarrier
     smoothed_csi = zeros(size(csi, 2), size(csi, 2));
     % Antenna 1 (values go in the upper left quadrant)
     m = 1;
-    for ii = 1:1:15
+    for ii = 1:1:n_subcarrier/2
         n = 1;
-        for j = ii:1:(ii + 15)
+        for j = ii:1:(ii + n_subcarrier/2)
             smoothed_csi(m, n) = csi(1, j); % 1 + sqrt(-1) * j;
             n = n + 1;
         end
@@ -828,9 +813,9 @@ function smoothed_csi = smooth_csi(csi)
     % loop handles the top right
     
     % Bottom left of smoothed csi matrix
-    for ii = 1:1:15
+    for ii = 1:1:n_subcarrier/2
         n = 1;
-        for j = ii:1:(ii + 15)
+        for j = ii:1:(ii + n_subcarrier/2)
             smoothed_csi(m, n) = csi(2, j); % 2 + sqrt(-1) * j;
             n = n + 1;
         end
@@ -839,9 +824,9 @@ function smoothed_csi = smooth_csi(csi)
     
     % Top right of smoothed csi matrix
     m = 1;
-    for ii = 1:1:15
-        n = 17;
-        for j = ii:1:(ii + 15)
+    for ii = 1:1:n_subcarrier/2
+        n = n_subcarrier/2+2;
+        for j = ii:1:(ii + n_subcarrier/2)
             smoothed_csi(m, n) = csi(2, j); %2 + sqrt(-1) * j;
             n = n + 1;
         end
@@ -849,9 +834,9 @@ function smoothed_csi = smooth_csi(csi)
     end
     
     % Antenna 3 (values go in the lower right quadrant)
-    for ii = 1:1:15
-        n = 17;
-        for j = ii:1:(ii + 15)
+    for ii = 1:1:n_subcarrier/2
+        n = n_subcarrier/2+2;
+        for j = ii:1:(ii + n_subcarrier/2)
             smoothed_csi(m, n) = csi(3, j); %3 + sqrt(-1) * j;
             n = n + 1;
         end

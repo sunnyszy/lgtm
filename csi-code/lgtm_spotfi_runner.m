@@ -21,11 +21,17 @@
 % DEALINGS IN THE SOFTWARE.
 %
 
-function spotfi_file_runner(input_file_name)
+function [top_aoas] = spotfi_file_runner(input_file_name)
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     globals_init()
     
     global DEBUG_BRIDGE_CODE_CALLING SIMULATION
+    
+    global AOA_EST_MODE SIMULAIION_ALWAYS_GENERATE_DATA
+    
+    SIMULAIION_ALWAYS_GENERATE_DATA = true;
+    AOA_EST_MODE = 'SPOTFI';
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Get the full path to the currently executing file and change the
     % pwd to the folder this file is contained in...
@@ -44,10 +50,10 @@ function spotfi_file_runner(input_file_name)
     
     %% main
     if SIMULATION
-        if ~exist('test-data/simulation_tmp.mat')
+        name_base = 'simulation_tmp';
+        if ~exist('test-data/simulation_tmp.mat') || SIMULAIION_ALWAYS_GENERATE_DATA
             generate_simulation_data(['test-data/' name_base], 4000);
         end
-        name_base = 'simulation_tmp';
     else   
         name_base = 'los-test-desk-left';
     end
@@ -128,7 +134,7 @@ end
 function output_top_aoas = run(data_file)
     %% DEFINE VARIABLE-----------------------------------------------------------------%%
     % Flow Controls
-    global AOA_EST_MODE
+    global AOA_EST_MODE 
     
     % Debug Controls
     global NUMBER_OF_PACKETS_TO_CONSIDER
@@ -139,12 +145,6 @@ function output_top_aoas = run(data_file)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     global d channel_frequency f_delta
     % Set physical layer parameters (frequency, subfrequency spacing, and antenna spacing
-    %antenna_distance = 0.1;
-    % frequency = 5 * 10^9;
-    % frequency = 5.785 * 10^9;
-    %frequency = 5.32 * 10^9;
-    % TODO actually 312.5kHz for 2.4G
-    %sub_freq_delta = (40 * 10^6) / 30;
 
     % Read data file in
     if ~OUTPUT_SUPPRESSED
@@ -183,7 +183,7 @@ function output_top_aoas = run(data_file)
         for i = 1:num_packets
             tmp_csi = squeeze(sampled_csi_trace{i}.csi);
             aoa_possibility = musicAOA(tmp_csi(:,1));
-            [~, output_top_aoas(1,:)] = sort(aoa_possibility, 'descend');
+            [~, output_top_aoas(i,:)] = sort(aoa_possibility, 'descend');
         end
         mean_aoa = mean(output_top_aoas(:,1));
     end

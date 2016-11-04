@@ -43,6 +43,7 @@ function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, packet_one_
     %  \rho and \beta are the linear fit variables
     %
     % Unwrap phase from CSI matrix
+    global n_subcarrier
     R = abs(csi_matrix);
     phase_matrix = unwrap(angle(csi_matrix), pi, 2);
 
@@ -56,13 +57,13 @@ function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, packet_one_
     % subcarrier_index -> unwrapped phase on antenna_1
     % subcarrier_index -> unwrapped phase on antenna_2
     % subcarrier_index -> unwrapped phase on antenna_3
-    fit_X(1:30, 1) = 1:1:30;
-    fit_X(31:60, 1) = 1:1:30;
-    fit_X(61:90, 1) = 1:1:30;
-    fit_Y = zeros(90, 1);
+    fit_X(1:n_subcarrier, 1) = 1:1:n_subcarrier;
+    fit_X(n_subcarrier+1:2*n_subcarrier, 1) = 1:1:n_subcarrier;
+    fit_X(2*n_subcarrier+1:3*n_subcarrier, 1) = 1:1:n_subcarrier;
+    fit_Y = zeros(3*n_subcarrier, 1);
     for i = 1:size(phase_matrix, 1)
         for j = 1:size(phase_matrix, 2)
-            fit_Y((i - 1) * 30 + j) = packet_one_phase_matrix(i, j);
+            fit_Y((i - 1) * n_subcarrier + j) = packet_one_phase_matrix(i, j);
         end
     end
 

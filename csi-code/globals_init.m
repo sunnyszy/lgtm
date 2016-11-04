@@ -2,7 +2,11 @@ function globals_init
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % Flow Controls
     global AOA_EST_MODE
-    AOA_EST_MODE = 'MUSIC'; %'SPOTFI'
+    global SIMULATION
+    global SIMULAIION_ALWAYS_GENERATE_DATA
+    AOA_EST_MODE = 'SPOTFI'; % 'MUSIC'  'SPOTFI'
+    SIMULATION = true;
+    SIMULAIION_ALWAYS_GENERATE_DATA = false;
     
     
     % Debug Controls
@@ -10,13 +14,13 @@ function globals_init
     global DEBUG_PATHS_LIGHT
     global NUMBER_OF_PACKETS_TO_CONSIDER
     global DEBUG_BRIDGE_CODE_CALLING
-    global SIMULATION
+    
     
     DEBUG_PATHS = false;
     DEBUG_PATHS_LIGHT = false;
     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
     DEBUG_BRIDGE_CODE_CALLING = false;
-    SIMULATION = true;
+    
     
     
     % Output controls
@@ -47,10 +51,10 @@ function globals_init
     global d theta_the l_the channel_frequency delta_f n_subcarrier c;
     d = 3.25*0.0254; % distance between two antenna;
     theta_the = pi/6; % in rad
-    l_the = 100; % in meter
+    l_the = 5; % in meter
     channel_frequency = 2462e6;
     delta_f = 312.5e3;
-    n_subcarrier = 30; % Atheros 56
+    n_subcarrier = 56; % Atheros 56
     c = 3e8; % speed of light
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
