@@ -10,16 +10,14 @@ function globals_init
     
     
     % Debug Controls
-    global DEBUG_PATHS
-    global DEBUG_PATHS_LIGHT
-    global NUMBER_OF_PACKETS_TO_CONSIDER
-    global DEBUG_BRIDGE_CODE_CALLING
-    
+    global  DEBUG_PATHS DEBUG_PATHS_LIGHT DEBUG_BRIDGE_CODE_CALLING ...
+     NUMBER_OF_PACKETS_TO_CONSIDER DEBUG_SANITIZE
     
     DEBUG_PATHS = false;
     DEBUG_PATHS_LIGHT = false;
     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
     DEBUG_BRIDGE_CODE_CALLING = false;
+    DEBUG_SANITIZE = false;
     
     
     

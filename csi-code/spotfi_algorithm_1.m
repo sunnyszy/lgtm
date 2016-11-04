@@ -79,5 +79,6 @@ function [csi_matrix, phase_matrix] = spotfi_algorithm_1(csi_matrix, packet_one_
     end
     
     % Reconstruct the CSI matrix with the adjusted phase
+    % TODO: for packet 2-m, only change R?
     csi_matrix = R .* exp(1i * phase_matrix);
 end

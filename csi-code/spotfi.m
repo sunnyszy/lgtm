@@ -32,6 +32,9 @@ function output_top_aoas = spotfi(csi_trace, data_name)
 %         globals_init()
 %     end
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
+    % debug controls
+    global DEBUG_SANITIZE
+    
     % Output controls
     global OUTPUT_SUPPRESSED
     global OUTPUT_AOA_VS_TOF_PLOT
@@ -67,6 +70,11 @@ function output_top_aoas = spotfi(csi_trace, data_name)
     % Sanitize ToFs with Algorithm 1
     packet_one_phase_matrix = unwrap(angle(csi), pi, 2);
     sanitized_csi = spotfi_algorithm_1(csi);
+    
+    if DEBUG_SANITIZE
+        sanitized_csis = zeros(3, 56, num_packets);
+        sanitized_csis(:,:,1) = sanitized_csi;
+    end
     % Acquire smoothed CSI matrix
     smoothed_sanitized_csi = smooth_csi(sanitized_csi);
     % Run SpotFi's AoA-ToF MUSIC algorithm on the smoothed and sanitized CSI matrix
@@ -95,6 +103,9 @@ function output_top_aoas = spotfi(csi_trace, data_name)
 
         % Sanitize ToFs with Algorithm 1
         sanitized_csi = spotfi_algorithm_1(csi, packet_one_phase_matrix);
+        if DEBUG_SANITIZE
+            sanitized_csis(:,:,packet_index) = sanitized_csi;
+        end
 
         % Acquire smoothed CSI matrix
         smoothed_sanitized_csi = smooth_csi(sanitized_csi);

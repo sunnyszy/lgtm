@@ -25,15 +25,19 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     globals_init()
     
-    global DEBUG_BRIDGE_CODE_CALLING SIMULATION
-    
-    global AOA_EST_MODE SIMULAIION_ALWAYS_GENERATE_DATA
-    
+    %flow control
+    global SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA AOA_EST_MODE
     SIMULATION = false;
     SIMULAIION_ALWAYS_GENERATE_DATA = true;
-    AOA_EST_MODE = 'MUSIC';%'SPOTFI';
+    AOA_EST_MODE = 'SPOTFI';%'MUSIC' 'SPOTFI';
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %debug control
+    global DEBUG_BRIDGE_CODE_CALLING DEBUG_SANITIZE
+    DEBUG_SANITIZE = true;
+    
+    %output control
+    
+    %%
     % Get the full path to the currently executing file and change the
     % pwd to the folder this file is contained in...
     [current_directory, ~, ~] = fileparts(mfilename('fullpath'));
