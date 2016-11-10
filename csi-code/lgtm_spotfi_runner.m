@@ -32,8 +32,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     AOA_EST_MODE = 'SPOTFI';%'MUSIC' 'SPOTFI';
     
     %debug control
-    global DEBUG_BRIDGE_CODE_CALLING DEBUG_SANITIZE
-    DEBUG_SANITIZE = true;
+    global DEBUG_BRIDGE_CODE_CALLING
     
     %output control
     
@@ -60,7 +59,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
             generate_simulation_data(['test-data/' name_base], 4000);
         end
     else   
-        name_base = '45';
+        name_base = '90';
     end
 
     data_file = ['test-data/' name_base];
@@ -72,67 +71,23 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     end
 end
 
-%% Output the array of top_aoas to the given file as doubles
-% top_aoas         -- The angle of arrivals selected as the most likely.
-% output_file_name -- The name of the file to write the angle of arrivals to.
-function output_top_aoas(top_aoas, output_file_name)
-    output_file = fopen(output_file_name, 'wb');
-    if (output_file < 0)
-        error('Couldn''t open file %s', output_file_name);
-    end
-    top_aoas
-    for ii = 1:size(top_aoas, 1)
-        fprintf(output_file, '%g ', top_aoas(ii, 1));
-    end
-    fprintf(output_file, '\n');
-    fclose(output_file);
-end
-
-% function globals_init
-%     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
-%     %% Debug Controls
-%     global DEBUG_PATHS
-%     global DEBUG_PATHS_LIGHT
-%     global NUMBER_OF_PACKETS_TO_CONSIDER
-%     global DEBUG_BRIDGE_CODE_CALLING
-%     global SIMULATION
-%     DEBUG_PATHS = false;
-%     DEBUG_PATHS_LIGHT = false;
-%     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
-%     DEBUG_BRIDGE_CODE_CALLING = false;
-%     SIMULATION = true; % always create new simulation testcase
-%     
-%     
-%     %% Output controls
-%     global OUTPUT_AOAS
-%     global OUTPUT_TOFS
-%     global OUTPUT_AOA_MUSIC_PEAK_GRAPH
-%     global OUTPUT_TOF_MUSIC_PEAK_GRAPH
-%     global OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH
-%     global OUTPUT_SELECTIVE_AOA_TOF_MUSIC_PEAK_GRAPH
-%     global OUTPUT_AOA_VS_TOF_PLOT
-%     global OUTPUT_SUPPRESSED
-%     global OUTPUT_PACKET_PROGRESS
-%     global OUTPUT_FIGURES_SUPPRESSED
-%     OUTPUT_AOAS = false;
-%     OUTPUT_TOFS = false;
-%     OUTPUT_AOA_MUSIC_PEAK_GRAPH = false;%true;
-%     OUTPUT_TOF_MUSIC_PEAK_GRAPH = false;%true;
-%     OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH = false;
-%     OUTPUT_SELECTIVE_AOA_TOF_MUSIC_PEAK_GRAPH = 0;%0;
-%     OUTPUT_AOA_VS_TOF_PLOT = false;
-%     OUTPUT_SUPPRESSED = true;
-%     OUTPUT_PACKET_PROGRESS = false;
-%     OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %% Output the array of top_aoas to the given file as doubles
+% % top_aoas         -- The angle of arrivals selected as the most likely.
+% % output_file_name -- The name of the file to write the angle of arrivals to.
+% function output_top_aoas(top_aoas, output_file_name)
+%     output_file = fopen(output_file_name, 'wb');
+%     if (output_file < 0)
+%         error('Couldn''t open file %s', output_file_name);
+%     end
+%     top_aoas
+%     for ii = 1:size(top_aoas, 1)
+%         fprintf(output_file, '%g ', top_aoas(ii, 1));
+%     end
+%     fprintf(output_file, '\n');
+%     fclose(output_file);
 % end
+
+
 
 %% Runs the SpotFi test over the passed in data files which each contain CSI data for many packets
 % data_files -- a cell array of file paths to data files
@@ -148,7 +103,7 @@ function output_top_aoas = run(data_file)
     global OUTPUT_SUPPRESSED
     global SIMULATION
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    global d channel_frequency f_delta
+    global d channel_frequency f_delta n_antenna n_subcarrier
     % Set physical layer parameters (frequency, subfrequency spacing, and antenna spacing
 
     % Read data file in
@@ -156,12 +111,22 @@ function output_top_aoas = run(data_file)
         fprintf('\n\nRunning on data file: %s\n', data_file)
     end
     if ~SIMULATION
-        csi_trace = read_log_file([data_file '.dat']);
-        %get the true csi order
-        for i = 1:length(csi_trace)
-            tmp_csi = csi_trace{i}.csi(2,:,:);
-            csi_trace{i}.csi(2,:,:) = csi_trace{i}.csi(3,:,:);
-            csi_trace{i}.csi(3,:,:) = tmp_csi;
+%         csi_trace = read_log_file([data_file '.dat']);
+%         %get the true csi order
+%         for i = 1:length(csi_trace)
+%             tmp_csi = csi_trace{i}.csi(2,:,:);
+%             csi_trace{i}.csi(2,:,:) = csi_trace{i}.csi(3,:,:);
+%             csi_trace{i}.csi(3,:,:) = tmp_csi;
+%         end
+        csi_trace = cell(NUMBER_OF_PACKETS_TO_CONSIDER,1);
+        for i = 1:NUMBER_OF_PACKETS_TO_CONSIDER
+            csi_trace{i}.csi = zeros(n_antenna,n_subcarrier);
+        end
+        for i = 1:n_antenna
+            tmp_trace = read_log_file([data_file '_' num2str(i)]);
+            for j = 1:NUMBER_OF_PACKETS_TO_CONSIDER
+                csi_trace{j}.csi(i,:) = tmp_trace{j}.csi(1,1,:);
+            end
         end
     else
         load(data_file);
@@ -180,23 +145,38 @@ function output_top_aoas = run(data_file)
     if ~OUTPUT_SUPPRESSED
         fprintf('Considering CSI for %d packets\n', num_packets)
     end
-    %% TODO: Remove after testing
-    fprintf('csi_trace\n')
-    csi_trace
-    csi_trace{1}
     
-    fprintf('num_packets: %d\n', num_packets)
+    %% TODO: Remove after testing
+%     fprintf('csi_trace\n')
+%     csi_trace
+%     csi_trace{1}
+    
+%     fprintf('num_packets: %d\n', num_packets)
     sampled_csi_trace = csi_sampling(csi_trace, num_packets, ...
             1, length(csi_trace));
+    
+    sanitized_csi = cell(NUMBER_OF_PACKETS_TO_CONSIDER,1);
+    
+    %% Sanitize
+    csi1 = sampled_csi_trace{1}.csi;
+    packet_one_phase_matrix = unwrap(angle(csi1), pi, 2);
+    sanitized_csi{1}.csi = spotfi_algorithm_1(csi1);
+    
+    for i = 2:NUMBER_OF_PACKETS_TO_CONSIDER
+        tmp_csi = sampled_csi_trace{i}.csi;
+        sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, packet_one_phase_matrix);
+    end   
+       
     if strcmp(AOA_EST_MODE, 'SPOTFI')
-        output_top_aoas = spotfi(sampled_csi_trace);
+        output_top_aoas = spotfi(sanitized_csi);
+        disp(output_top_aoas(1));
     elseif strcmp(AOA_EST_MODE, 'MUSIC')
         for i = 1:num_packets
-            tmp_csi = squeeze(sampled_csi_trace{i}.csi(:,1,:));
-            aoa_possibility = musicAOA(tmp_csi(:,1));
+            aoa_possibility = musicAOA(sanitized_csi{i}.csi(:,1));
             [~, top_aoas(i,:)] = sort(aoa_possibility, 'descend');
         end
         output_top_aoas = transpose(top_aoas(:,1));
+        disp(mean(output_top_aoas));
     end
             
 end

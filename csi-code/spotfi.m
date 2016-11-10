@@ -27,13 +27,12 @@
 % sub_freq_delta   -- the difference between adjacent subcarriers
 % antenna_distance -- the distance between each antenna in the array, measured in meters
 % data_name        -- a label for the data which is included in certain outputs
-function output_top_aoas = spotfi(csi_trace, data_name)
+function output_top_aoas = spotfi(sanitized_csi, data_name)
 %     if exist('OUTPUT_SUPPRESSED') == 0
 %         globals_init()
 %     end
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % debug controls
-    global DEBUG_SANITIZE
     
     % Output controls
     global OUTPUT_SUPPRESSED
@@ -42,41 +41,21 @@ function output_top_aoas = spotfi(csi_trace, data_name)
     global OUTPUT_FIGURES_SUPPRESSED
     global SIMULATION
     % global 
+    global n_antenna n_subcarrier
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if nargin < 2
         data_name = ' - ';
     end
     
-    num_packets = length(csi_trace);
+    num_packets = length(sanitized_csi);
     % Loop over packets, estimate AoA and ToF from the CSI data for each packet
     aoa_packet_data = cell(num_packets, 1);
     tof_packet_data = cell(num_packets, 1);
-    packet_one_phase_matrix = 0;
-
-    % Do computations for packet one so the packet loop can be parallelized
-    % Get CSI for current packet
-    csi_entry = csi_trace{1};
-    if SIMULATION
-        csi = csi_entry.csi;
-    else
-        csi = csi_entry.csi;
-    end
-    % Only consider measurements for transmitting on one antenna
-    csi = csi(:, 1, :);
-    % Remove the single element dimension
-    csi = squeeze(csi);
-
-    % Sanitize ToFs with Algorithm 1
-    packet_one_phase_matrix = unwrap(angle(csi), pi, 2);
-    sanitized_csi = spotfi_algorithm_1(csi);
-    
-    if DEBUG_SANITIZE
-        sanitized_csis = zeros(3, 56, num_packets);
-        sanitized_csis(:,:,1) = sanitized_csi;
-    end
+%     packet_one_phase_matrix = 0;
+   
     % Acquire smoothed CSI matrix
-    smoothed_sanitized_csi = smooth_csi(sanitized_csi);
+    smoothed_sanitized_csi = smooth_csi(sanitized_csi{1}.csi);
     % Run SpotFi's AoA-ToF MUSIC algorithm on the smoothed and sanitized CSI matrix
     [aoa_packet_data{1}, tof_packet_data{1}] = aoa_tof_music(smoothed_sanitized_csi, data_name);
 
@@ -87,28 +66,9 @@ function output_top_aoas = spotfi(csi_trace, data_name)
         if ~OUTPUT_SUPPRESSED && OUTPUT_PACKET_PROGRESS
             fprintf('Packet %d of %d\n', packet_index, num_packets)
         end
-        % Get CSI for current packet
-        csi_entry = csi_trace{packet_index};
-        
-        if SIMULATION
-            csi = csi_entry.csi;
-        else
-            csi = csi_entry.csi;
-        end
-        
-        % Only consider measurements for transmitting on one antenna
-        csi = csi(:, 1, :);
-        % Remove the single element dimension
-        csi = squeeze(csi);
-
-        % Sanitize ToFs with Algorithm 1
-        sanitized_csi = spotfi_algorithm_1(csi, packet_one_phase_matrix);
-        if DEBUG_SANITIZE
-            sanitized_csis(:,:,packet_index) = sanitized_csi;
-        end
 
         % Acquire smoothed CSI matrix
-        smoothed_sanitized_csi = smooth_csi(sanitized_csi);
+        smoothed_sanitized_csi = smooth_csi(sanitized_csi{packet_index}.csi);
         % Run SpotFi's AoA-ToF MUSIC algorithm on the smoothed and sanitized CSI matrix
         [aoa_packet_data{packet_index}, tof_packet_data{packet_index}] = aoa_tof_music(...
                 smoothed_sanitized_csi, data_name);

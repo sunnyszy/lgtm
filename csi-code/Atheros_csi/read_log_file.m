@@ -29,7 +29,7 @@ if status ~= 0
     return;
 end
 len = ftell(f);
-fprintf('file length is:%d\n',len);
+% fprintf('file length is:%d\n',len);
 
 status = fseek(f, 0, 'bof');
 if status ~= 0
@@ -56,7 +56,7 @@ end
 while cur < (len - 4)
     field_len = fread(f, 1, 'uint16', 0, endian_format);
 	cur = cur + 2;
-    fprintf('Block length is:%d\n',field_len);
+%     fprintf('Block length is:%d\n',field_len);
 
 	if (cur + field_len) > len
    		break;
@@ -65,73 +65,73 @@ while cur < (len - 4)
     timestamp = fread(f, 1, 'uint64', 0, [endian_format '.l64']);
 	csi_matrix.timestamp = timestamp;
 	cur = cur + 8;
-	fprintf('timestamp is %d\n',timestamp);
+% 	fprintf('timestamp is %d\n',timestamp);
 
     csi_len = fread(f, 1, 'uint16', 0, endian_format);
 	csi_matrix.csi_len = csi_len;
 	cur = cur + 2;
-    fprintf('csi_len is %d\n',csi_len);
+%     fprintf('csi_len is %d\n',csi_len);
 
     tx_channel = fread(f, 1, 'uint16', 0, endian_format);
 	csi_matrix.channel = tx_channel;
 	cur = cur + 2;
-    fprintf('channel is %d\n',tx_channel);
+%     fprintf('channel is %d\n',tx_channel);
    
     err_info = fread(f, 1,'uint8=>int');
     csi_matrix.err_info = err_info;
-    fprintf('err_info is %d\n',err_info);
+%     fprintf('err_info is %d\n',err_info);
     cur = cur + 1;
     
     noise_floor = fread(f, 1, 'uint8=>int');
 	csi_matrix.noise_floor = noise_floor;
 	cur = cur + 1;
-    fprintf('noise_floor is %d\n',noise_floor);
+%     fprintf('noise_floor is %d\n',noise_floor);
     
     Rate = fread(f, 1, 'uint8=>int');
 	csi_matrix.Rate = Rate;
 	cur = cur + 1;
-	fprintf('rate is %x\n',Rate);
+% 	fprintf('rate is %x\n',Rate);
     
     
     bandWidth = fread(f, 1, 'uint8=>int');
 	csi_matrix.bandWidth = bandWidth;
 	cur = cur + 1;
-	fprintf('bandWidth is %d\n',bandWidth);
+% 	fprintf('bandWidth is %d\n',bandWidth);
     
     num_tones = fread(f, 1, 'uint8=>int');
 	csi_matrix.num_tones = num_tones;
 	cur = cur + 1;
-	fprintf('num_tones is %d  ',num_tones);
+% 	fprintf('num_tones is %d  ',num_tones);
 
 	nr = fread(f, 1, 'uint8=>int');
 	csi_matrix.nr = nr;
 	cur = cur + 1;
-	fprintf('nr is %d  ',nr);
+% 	fprintf('nr is %d  ',nr);
 
 	nc = fread(f, 1, 'uint8=>int');
 	csi_matrix.nc = nc;
 	cur = cur + 1;
-	fprintf('nc is %d\n',nc);
+% 	fprintf('nc is %d\n',nc);
 	
 	rssi = fread(f, 1, 'uint8=>int');
 	csi_matrix.rssi = rssi;
 	cur = cur + 1;
-	fprintf('rssi is %d\n',rssi);
+% 	fprintf('rssi is %d\n',rssi);
 
 	rssi1 = fread(f, 1, 'uint8=>int');
 	csi_matrix.rssi1 = rssi1;
 	cur = cur + 1;
-	fprintf('rssi1 is %d\n',rssi1);
+% 	fprintf('rssi1 is %d\n',rssi1);
 
 	rssi2 = fread(f, 1, 'uint8=>int');
 	csi_matrix.rssi2 = rssi2;
 	cur = cur + 1;
-	fprintf('rssi2 is %d\n',rssi2);
+% 	fprintf('rssi2 is %d\n',rssi2);
 
 	rssi3 = fread(f, 1, 'uint8=>int');
 	csi_matrix.rssi3 = rssi3;
 	cur = cur + 1;
-	fprintf('rssi3 is %d\n',rssi3);
+% 	fprintf('rssi3 is %d\n',rssi3);
     
 %     not_sounding = fread(f, 1, 'uint8=>int');
 %     cur = cur + 1;
@@ -145,7 +145,7 @@ while cur < (len - 4)
     payload_len = fread(f, 1, 'uint16', 0, endian_format);
 	csi_matrix.payload_len = payload_len;
 	cur = cur + 2;
-    fprintf('payload length: %d\n',payload_len);	
+%     fprintf('payload length: %d\n',payload_len);	
     
     if csi_len > 0
         csi_buf = fread(f, csi_len, 'uint8=>uint8');

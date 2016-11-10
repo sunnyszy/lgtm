@@ -11,13 +11,12 @@ function globals_init
     
     % Debug Controls
     global  DEBUG_PATHS DEBUG_PATHS_LIGHT DEBUG_BRIDGE_CODE_CALLING ...
-     NUMBER_OF_PACKETS_TO_CONSIDER DEBUG_SANITIZE
+     NUMBER_OF_PACKETS_TO_CONSIDER
     
     DEBUG_PATHS = false;
     DEBUG_PATHS_LIGHT = false;
     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value
     DEBUG_BRIDGE_CODE_CALLING = false;
-    DEBUG_SANITIZE = false;
     
     
     
@@ -46,14 +45,16 @@ function globals_init
     OUTPUT_FIGURES_SUPPRESSED = false; % Set to true when running in deployment from command line
     
     %% constant parameter
-    global d theta_the l_the channel_frequency delta_f n_subcarrier c;
-    d = 3.25*0.0254; % distance between two antenna;
+    global d theta_the l_the channel_frequency delta_f n_subcarrier c n_antenna;
     theta_the = pi/6; % in rad
     l_the = 5; % in meter
-    channel_frequency = 5180e6;
+    channel_frequency = 2462e6;
     delta_f = 312.5e3;
     n_subcarrier = 56; % Atheros 56
     c = 3e8; % speed of light
+    n_antenna = 3;
+    
+    d = c/channel_frequency/2; % distance between two antenna;
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
