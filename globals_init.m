@@ -1,10 +1,12 @@
 function globals_init
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % Flow Controls
-    global AOA_EST_MODE SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA
+    global AOA_EST_MODE SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA ...
+        OUTDOOR_FLAG
     AOA_EST_MODE = 'SPOTFI'; % 'MUSIC'  'SPOTFI'
     SIMULATION = true;
     SIMULAIION_ALWAYS_GENERATE_DATA = false;
+    OUTDOOR_FLAG = false;
     
     
     % Debug Controls
