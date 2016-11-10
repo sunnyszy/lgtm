@@ -43,7 +43,7 @@ function globals_init
     l_the = 5; % in meter
     channel_frequency = 2462e6;
     delta_f = 312.5e3;
-    n_subcarrier = 30; % Atheros 56
+    n_subcarrier = 56; % Atheros 56
     c = 3e8; % speed of light
     n_antenna = 3;
     d = c/channel_frequency/2; % distance between two antenna;
