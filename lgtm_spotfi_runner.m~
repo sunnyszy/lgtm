@@ -159,11 +159,11 @@ function output_top_aoas = run(data_file)
     
     %% Sanitize
     csi1 = sampled_csi_trace{1}.csi;
-    [sanitized_csi{1}.csi, est_slope] = spotfi_algorithm_1(csi1);
+    [sanitized_csi{1}.csi = spotfi_algorithm_1(csi1);
     
     for i = 2:NUMBER_OF_PACKETS_TO_CONSIDER
         tmp_csi = sampled_csi_trace{i}.csi;
-        sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, est_slope);
+        sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, packet_one_phase_matrix);
     end   
        
     if strcmp(AOA_EST_MODE, 'SPOTFI')

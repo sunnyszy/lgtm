@@ -765,7 +765,11 @@ function smoothed_csi = smooth_csi(csi)
     for i = 1:n_column
         % index of subcarrier and antenna
         [ind_s, ind_a] = ind2sub([n_subcarrier, n_antenna], i);
-        tmp_matrix = csi(ind_a:ind_a+subset_y-1, ind_s:ind_s+subset_x-1);
-        smoothed_csi(:,i) = reshape(transpose(tmp_matrix), [n_row, 1]);
-    end  
+        tmp_matrix = csi(ind_a:)
+%         smoothed_csi(:,i) = transpose(1, )
+    end
+    
+    
+    
+    
 end
