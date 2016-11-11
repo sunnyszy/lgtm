@@ -30,7 +30,7 @@ function output_top_aoa = spotfi(sanitized_csi)
 end
 
 
-function [estimated_aoa] = aoa_tof_music(x, data_name)
+function [estimated_aoa] = aoa_tof_music(x)
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % Flow Variables 
     global OUTDOOR_FLAG
@@ -41,9 +41,6 @@ function [estimated_aoa] = aoa_tof_music(x, data_name)
     % Phisical constant
     global n_subcarrier;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if nargin == 1
-        data_name = '-';
-    end
     
     % Data covarivance matrix
     R = x * x'; 
@@ -85,12 +82,12 @@ function [estimated_aoa] = aoa_tof_music(x, data_name)
     % Angle in degrees 
     theta = 0:1:180; 
     % time in seconds
-    %tau = 0:(1.0 * 10^-9):(50 * 10^-9);
+    %
     % TODO: put outdoor variable
     if ~OUTDOOR_FLAG
-        tau = 0:(0.2 * 10^-9):(20 * 10^-9); % 0 - 5m
+        tau = 0:(0.2 * 10^-9):(20 * 10^-9); % 0 - 6m
     else
-        error('outdoor time not set');
+        tau = 0:(2 * 10^-9):(200 * 10^-9); % 0 - 60m
     end
     Pmusic = zeros(length(theta), length(tau));
     % Angle of Arrival Loop (AoA)

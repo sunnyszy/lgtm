@@ -2,12 +2,12 @@ function globals_init
     %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
     % Flow Controls
     global AOA_EST_MODE SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA ...
-        OUTDOOR_FLAG NUMBER_OF_PACKETS_TO_CONSIDER
+        OUTDOOR_FLAG
     AOA_EST_MODE = 'SPOTFI'; % 'MUSIC'  'SPOTFI'
     SIMULATION = true;
     SIMULAIION_ALWAYS_GENERATE_DATA = false;
     OUTDOOR_FLAG = false;
-    NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value    
+%     NUMBER_OF_PACKETS_TO_CONSIDER = 10; % Set to -1 to ignore this variable's value    
     
     % Output controls
     global OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH

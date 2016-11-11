@@ -21,15 +21,16 @@
 % DEALINGS IN THE SOFTWARE.
 %
 
-function [top_aoas] = wgtt_runner()
+function wgtt_runner()
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     globals_init()
     
     %flow control
-    global SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA AOA_EST_MODE
+    global SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA AOA_EST_MODE OUTDOOR_FLAG
     SIMULATION = false;
     SIMULAIION_ALWAYS_GENERATE_DATA = true;
-    AOA_EST_MODE = 'MUSIC';%'MUSIC' 'SPOTFI';
+    AOA_EST_MODE = 'SPOTFI';%'MUSIC' 'SPOTFI';
+    OUTDOOR_FLAG = true;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Get the full path to the currently executing file and change the
@@ -46,65 +47,24 @@ function [top_aoas] = wgtt_runner()
             generate_simulation_data(['test-data/' name_base], 4000);
         end
     else   
-        name_base = '135';
+        name_base = 'd2';
     end
 
     data_file = ['test-data/' name_base];
-    top_aoas = run(data_file);
-    
-    save(['test-output/' name_base]);
-end
-
-
-%% Runs the SpotFi test over the passed in data files which each contain CSI data for many packets
-% data_files -- a cell array of file paths to data files
-function output_top_aoa = run(data_file)
-    %% DEFINE VARIABLE-----------------------------------------------------------------%%
-    % Flow Controls
-    global AOA_EST_MODE SIMULATION
-    
-    % Debug Controls
-    global NUMBER_OF_PACKETS_TO_CONSIDER
-    
-    % Physical parameter
-    global n_antenna n_subcarrier
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
-    %% Packet reshaping, sanitize and sampling
-    if ~SIMULATION
-        csi_trace = cell(NUMBER_OF_PACKETS_TO_CONSIDER,1);
-        for i = 1:NUMBER_OF_PACKETS_TO_CONSIDER
-            csi_trace{i}.csi = zeros(n_antenna,n_subcarrier);
-        end
-        for i = 1:n_antenna
-            tmp_trace = read_log_file([data_file '_' num2str(i)]);
-            for j = 1:NUMBER_OF_PACKETS_TO_CONSIDER
-                csi_trace{j}.csi(i,:) = tmp_trace{j}.csi(1,1,:);
-            end
-        end
-    else
-        load(data_file);
-    end
-
-    % Set the number of packets to consider, by default consider all
-    num_packets = length(csi_trace);
-    if NUMBER_OF_PACKETS_TO_CONSIDER ~= -1
-        num_packets = NUMBER_OF_PACKETS_TO_CONSIDER;
-    end
-
-    sampled_csi_trace = csi_sampling(csi_trace, num_packets, ...
-            1, length(csi_trace));
-    sanitized_csi = cell(NUMBER_OF_PACKETS_TO_CONSIDER,1);
-    
-    csi1 = sampled_csi_trace{1}.csi;
-    [sanitized_csi{1}.csi, est_slope] = spotfi_algorithm_1(csi1);
-    
-    for i = 2:NUMBER_OF_PACKETS_TO_CONSIDER
-        tmp_csi = sampled_csi_trace{i}.csi;
-        sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, est_slope);
-    end   
-    
     %% mode choosing
+    % read data algorithm
+    if ~SIMULATION && OUTDOOR_FLAG %outdoor experiment
+        load_csi_trace = @(data_file) outdoor_load_csi_trace(data_file);
+        main = @(csi_trace,get_aoa) outdoor_main(csi_trace,get_aoa);
+    elseif  ~SIMULATION && ~OUTDOOR_FLAG % indoor experiment
+        load_csi_trace = @(data_file) indoor_load_csi_trace(data_file);
+        main = @(csi_trace,get_aoa) indoor_main(csi_trace,get_aoa);
+    elseif SIMULATION
+        load_csi_trace = @(data_file) load(data_file);
+        main = @(csi_trace,get_aoa) simulation_main(csi_trace,get_aoa);
+    end
+    % aoa algorithm
     if strcmp(AOA_EST_MODE, 'SPOTFI')
         get_aoa = @(csi_packet)spotfi(csi_packet.csi);
     elseif strcmp(AOA_EST_MODE, 'MUSIC')
@@ -113,9 +73,132 @@ function output_top_aoa = run(data_file)
         error('No available algorithm specify')
     end
     
-    %% enter your main function here
+    %% start running
+    % load file
+    csi_trace = load_csi_trace(data_file);
+    
+    %% Packet reshaping, sanitize and sampling
+    % Set the number of packets to consider, by default consider all
+    num_packets = length(csi_trace);
+    sanitized_csi = cell(num_packets,1);
+    
+    csi1 = csi_trace{1}.csi;
+    [sanitized_csi{1}.csi, est_slope] = spotfi_algorithm_1(csi1);
+    
+    for i = 2:num_packets
+        tmp_csi = csi_trace{i}.csi;
+        sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, est_slope);
+    end   
+    
+    
+    
+    % main function here
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    output_top_aoa = get_aoa(sanitized_csi{2},3);
-   
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    
+    main(sanitized_csi,get_aoa);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    save(['test-output/' name_base]);
+end
+
+%% csi trace read for outdoor
+function csi_trace = outdoor_load_csi_trace(data_file_name)
+% Physical parameter
+global n_antenna
+
+
+%% enter your read data function here
+tmp_trace = read_log_file([data_file_name '.dat']);
+n_pkts = length(tmp_trace);
+% csi_trace = cell(n_pkts,1);
+counter = 1;
+% for i = 1:n_pkts
+%     csi_trace{i}.csi = zeros(n_antenna,n_subcarrier);
+% end
+for i = 1:n_pkts
+    if tmp_trace{i}.csi_len 
+%         tmp_trace{i}.csi_len
+        csi_noempty{counter,1}.csi = squeeze(tmp_trace{i}.csi(3,1,:));
+        counter = counter + 1;
+    end
+end
+
+start_index = 16950;
+end_index = 17050;
+range = end_index - start_index + 1;
+n_aggre = range - n_antenna + 1;
+csi_trace = cell(n_aggre, 1);
+for i = 1:n_aggre
+    csi_trace{i}.csi = [];
+    for j = 1:n_antenna
+        csi_trace{i}.csi = [csi_trace{i}.csi; transpose(csi_noempty{i+start_index+j-2}.csi)];
+    end
+end
+
+end
+
+
+%% csi_trace read for indoor test
+function csi_trace = indoor_load_csi_trace(data_file_name)
+
+% Physical parameter
+global n_antenna
+max_n_pkt = -1;
+%% enter your read data function here
+for i = 1:n_antenna
+    tmp_trace = read_log_file([data_file_name '_' num2str(i)]);
+    if length(tmp_trace) > max_n_pkt
+        max_n_pkt = length(tmp_trace);
+    end
+end
+
+%load all pkts (possibably with no csi)
+noempty_trace = cell(n_antenna, max_n_pkt);
+min_n_pkt = 1e8;
+for i = 1:n_antenna
+    tmp_trace = read_log_file([data_file_name '_' num2str(i)]);
+    counter = 1;
+    for j = 1:length(tmp_trace)
+        if tmp_trace{j}.csi_len
+            noempty_trace{i,counter} = tmp_trace{j}.csi(1,1,:);
+            counter = counter + 1;
+        end
+    end
+    if (counter-1) < min_n_pkt
+        min_n_pkt = counter - 1;
+    end
+end
+
+csi_trace = cell(min_n_pkt, 1);
+for i = 1:min_n_pkt
+    for j = 1:n_antenna
+        csi_trace{i}.csi(j,:) = noempty_trace{j,i};
+    end
+end
+
+end
+
+%% indoor main
+function indoor_main(csi_trace, get_aoa)
+    n_pkt = 10;
+    aoas = zeros(n_pkt, 1);
+    for i = 1:n_pkt
+        aoas(i) = get_aoa(csi_trace{i});
+        disp(i);
+    end
+    plot(aoas);
+    legend(['mean aoa: ' num2str(mean(aoas))]);
+end
+
+%% outdoor main
+function outdoor_main(csi_trace, get_aoa)
+    global d;
+    d = 0.01;
+    n_pkt = 10;
+    aoas = zeros(n_pkt, 1);
+    for i = 1:n_pkt
+        aoas(i) = get_aoa(csi_trace{i});
+        disp(i);
+    end
+    plot(aoas);
 end
