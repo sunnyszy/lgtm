@@ -21,8 +21,8 @@
 % DEALINGS IN THE SOFTWARE.
 %
 
-function [top_aoas] = spotfi_file_runner(input_file_name)
-    %% DEBUG AND OUTPUT VARIABLES-----------------------------------------------------------------%%
+function [top_aoas] = wgtt_runner()
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     globals_init()
     
     %flow control
@@ -30,27 +30,14 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     SIMULATION = false;
     SIMULAIION_ALWAYS_GENERATE_DATA = true;
     AOA_EST_MODE = 'MUSIC';%'MUSIC' 'SPOTFI';
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    %debug control
-    global DEBUG_BRIDGE_CODE_CALLING
-    
-    %output control
-    
-    %%
     % Get the full path to the currently executing file and change the
     % pwd to the folder this file is contained in...
     [current_directory, ~, ~] = fileparts(mfilename('fullpath'));
     cd(current_directory);
     % Paths for the csitool functions provided
     path('./Atheros_csi', path);
-    if DEBUG_BRIDGE_CODE_CALLING
-        fprintf('The path: %s\n', path)
-        fprintf('The pwd: %s\n', pwd)
-    end
-    if ~DEBUG_BRIDGE_CODE_CALLING
-        close all
-        clc
-    end
     
     %% main
     if SIMULATION
@@ -66,27 +53,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     top_aoas = run(data_file);
     
     save(['test-output/' name_base]);
-    if DEBUG_BRIDGE_CODE_CALLING
-        fprintf('Done Running!\n')
-    end
 end
-
-% %% Output the array of top_aoas to the given file as doubles
-% % top_aoas         -- The angle of arrivals selected as the most likely.
-% % output_file_name -- The name of the file to write the angle of arrivals to.
-% function output_top_aoas(top_aoas, output_file_name)
-%     output_file = fopen(output_file_name, 'wb');
-%     if (output_file < 0)
-%         error('Couldn''t open file %s', output_file_name);
-%     end
-%     top_aoas
-%     for ii = 1:size(top_aoas, 1)
-%         fprintf(output_file, '%g ', top_aoas(ii, 1));
-%     end
-%     fprintf(output_file, '\n');
-%     fclose(output_file);
-% end
-
 
 
 %% Runs the SpotFi test over the passed in data files which each contain CSI data for many packets
@@ -94,30 +61,17 @@ end
 function output_top_aoa = run(data_file)
     %% DEFINE VARIABLE-----------------------------------------------------------------%%
     % Flow Controls
-    global AOA_EST_MODE 
+    global AOA_EST_MODE SIMULATION
     
     % Debug Controls
     global NUMBER_OF_PACKETS_TO_CONSIDER
     
-    % Output controls
-    global OUTPUT_SUPPRESSED
-    global SIMULATION
+    % Physical parameter
+    global n_antenna n_subcarrier
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    global d channel_frequency f_delta n_antenna n_subcarrier
-    % Set physical layer parameters (frequency, subfrequency spacing, and antenna spacing
-
-    % Read data file in
-    if ~OUTPUT_SUPPRESSED
-        fprintf('\n\nRunning on data file: %s\n', data_file)
-    end
+  
+    %% Packet reshaping, sanitize and sampling
     if ~SIMULATION
-%         csi_trace = read_log_file([data_file '.dat']);
-%         %get the true csi order
-%         for i = 1:length(csi_trace)
-%             tmp_csi = csi_trace{i}.csi(2,:,:);
-%             csi_trace{i}.csi(2,:,:) = csi_trace{i}.csi(3,:,:);
-%             csi_trace{i}.csi(3,:,:) = tmp_csi;
-%         end
         csi_trace = cell(NUMBER_OF_PACKETS_TO_CONSIDER,1);
         for i = 1:NUMBER_OF_PACKETS_TO_CONSIDER
             csi_trace{i}.csi = zeros(n_antenna,n_subcarrier);
@@ -132,32 +86,16 @@ function output_top_aoa = run(data_file)
         load(data_file);
     end
 
-    % Extract CSI information for each packet
-    if ~OUTPUT_SUPPRESSED
-        fprintf('Have CSI for %d packets\n', length(csi_trace))
-    end
-
     % Set the number of packets to consider, by default consider all
     num_packets = length(csi_trace);
     if NUMBER_OF_PACKETS_TO_CONSIDER ~= -1
         num_packets = NUMBER_OF_PACKETS_TO_CONSIDER;
     end
-    if ~OUTPUT_SUPPRESSED
-        fprintf('Considering CSI for %d packets\n', num_packets)
-    end
-    
-    %% TODO: Remove after testing
-%     fprintf('csi_trace\n')
-%     csi_trace
-%     csi_trace{1}
-    
-%     fprintf('num_packets: %d\n', num_packets)
+
     sampled_csi_trace = csi_sampling(csi_trace, num_packets, ...
             1, length(csi_trace));
-    
     sanitized_csi = cell(NUMBER_OF_PACKETS_TO_CONSIDER,1);
     
-    %% Sanitize
     csi1 = sampled_csi_trace{1}.csi;
     [sanitized_csi{1}.csi, est_slope] = spotfi_algorithm_1(csi1);
     
@@ -166,6 +104,7 @@ function output_top_aoa = run(data_file)
         sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, est_slope);
     end   
     
+    %% mode choosing
     if strcmp(AOA_EST_MODE, 'SPOTFI')
         get_aoa = @(csi_packet)spotfi(csi_packet.csi);
     elseif strcmp(AOA_EST_MODE, 'MUSIC')
@@ -175,8 +114,8 @@ function output_top_aoa = run(data_file)
     end
     
     %% enter your main function here
- 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     output_top_aoa = get_aoa(sanitized_csi{2},3);
    
-            
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 end
