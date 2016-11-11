@@ -29,7 +29,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
     global SIMULATION SIMULAIION_ALWAYS_GENERATE_DATA AOA_EST_MODE
     SIMULATION = false;
     SIMULAIION_ALWAYS_GENERATE_DATA = true;
-    AOA_EST_MODE = 'SPOTFI';%'MUSIC' 'SPOTFI';
+    AOA_EST_MODE = 'MUSIC';%'MUSIC' 'SPOTFI';
     
     %debug control
     global DEBUG_BRIDGE_CODE_CALLING
@@ -59,7 +59,7 @@ function [top_aoas] = spotfi_file_runner(input_file_name)
             generate_simulation_data(['test-data/' name_base], 4000);
         end
     else   
-        name_base = '90';
+        name_base = '135';
     end
 
     data_file = ['test-data/' name_base];
@@ -91,7 +91,7 @@ end
 
 %% Runs the SpotFi test over the passed in data files which each contain CSI data for many packets
 % data_files -- a cell array of file paths to data files
-function output_top_aoas = run(data_file)
+function output_top_aoa = run(data_file)
     %% DEFINE VARIABLE-----------------------------------------------------------------%%
     % Flow Controls
     global AOA_EST_MODE 
@@ -165,17 +165,18 @@ function output_top_aoas = run(data_file)
         tmp_csi = sampled_csi_trace{i}.csi;
         sanitized_csi{i}.csi = spotfi_algorithm_1(tmp_csi, est_slope);
     end   
-       
+    
     if strcmp(AOA_EST_MODE, 'SPOTFI')
-        output_top_aoas = spotfi(sanitized_csi);
-        disp(output_top_aoas(1));
+        get_aoa = @(csi_packet)spotfi(csi_packet.csi);
     elseif strcmp(AOA_EST_MODE, 'MUSIC')
-        for i = 1:num_packets
-            aoa_possibility = musicAOA(sanitized_csi{i}.csi(:,1));
-            [~, top_aoas(i,:)] = sort(aoa_possibility, 'descend');
-        end
-        output_top_aoas = transpose(top_aoas(:,1));
-        disp(mean(output_top_aoas));
+        get_aoa = @(csi_packet, ind_subcarrier)musicAOA(csi_packet.csi(:,ind_subcarrier));
+    else
+        error('No available algorithm specify')
     end
+    
+    %% enter your main function here
+ 
+    output_top_aoa = get_aoa(sanitized_csi{2},3);
+   
             
 end
