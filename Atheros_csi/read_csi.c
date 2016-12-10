@@ -101,6 +101,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 imag = current_data & bitmask;
                 
                 imag = signbit_convert(imag, BITS_PER_SYMBOL);
+                //printf("Imag is %d", imag);
 		        *ptrI = (double) imag;
 		        ++ptrI;
                 bits_left -= BITS_PER_SYMBOL;
@@ -117,6 +118,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 real = current_data & bitmask;
                 
                 real = signbit_convert(real, BITS_PER_SYMBOL);
+                //printf("real is %d", real);
 		        *ptrR = (double) real;
 		        ++ptrR;
                 bits_left -= BITS_PER_SYMBOL;

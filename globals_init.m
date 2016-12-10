@@ -22,7 +22,7 @@ function globals_init
     delta_f = 312.5e3;
     n_subcarrier = 56; % Atheros 56
     c = 3e8; % speed of light
-    n_antenna = 7;
+    n_antenna = 3;
     d = c/channel_frequency/2; % distance between two antenna;
     [subset_x, subset_y] = best_rank_subset(); %antenna subset used in smooth matrix
     

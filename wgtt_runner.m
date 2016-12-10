@@ -30,7 +30,11 @@ function wgtt_runner()
     SIMULATION = false;
     SIMULAIION_ALWAYS_GENERATE_DATA = true;
     AOA_EST_MODE = 'SPOTFI';%'MUSIC' 'SPOTFI';
-    OUTDOOR_FLAG = true;
+    OUTDOOR_FLAG = false;
+    
+    %output control
+    global OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH 
+    OUTPUT_AOA_TOF_MUSIC_PEAK_GRAPH  = true;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Get the full path to the currently executing file and change the
@@ -47,7 +51,7 @@ function wgtt_runner()
             generate_simulation_data(['test-data/' name_base], 4000);
         end
     else   
-        name_base = 'd2';
+        name_base = '90';
     end
 
     data_file = ['test-data/' name_base];

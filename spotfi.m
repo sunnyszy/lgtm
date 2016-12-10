@@ -85,7 +85,8 @@ function [estimated_aoa] = aoa_tof_music(x)
     %
     % TODO: put outdoor variable
     if ~OUTDOOR_FLAG
-        tau = 0:(0.2 * 10^-9):(20 * 10^-9); % 0 - 6m
+        %tau = 0:(0.2 * 10^-9):(20 * 10^-9); % 0 - 6m
+        tau = 0:(1.0 * 10^-9):(200 * 10^-9);
     else
         tau = 0:(2 * 10^-9):(200 * 10^-9); % 0 - 60m
     end
